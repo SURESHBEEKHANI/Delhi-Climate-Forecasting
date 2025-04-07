@@ -19,6 +19,7 @@ st.sidebar.markdown("""**Application Features:**
 - Humidity Forecasting  
 - Wind Speed Forecasting  
 - Mean Pressure Forecasting""")
+show_meantemp = st.sidebar.checkbox("Show Temperature Forecast", value=True)  # New checkbox for Temperature Forecast
 show_humidity = st.sidebar.checkbox("Show Humidity Forecast", value=True)  # Added new checkbox
 show_wind_speed = st.sidebar.checkbox("Show Wind Speed Forecast", value=True)  # existing checkbox
 show_meanpressure = st.sidebar.checkbox("Show Mean Pressure Forecast", value=True)  # added new checkbox
@@ -40,29 +41,30 @@ if uploaded_file:
     # Forecast Period Selection
     periods = st.slider("Select number of future days to predict", min_value=30, max_value=365, value=180)
 
-    # Train Prophet Model
-    model = Prophet()
-    model.fit(df)
+    if show_meantemp:
+        # Train Prophet Model for Temperature Forecast
+        model = Prophet()
+        model.fit(df)
 
-    # Create Future Dataframe and Predict
-    future = model.make_future_dataframe(periods=periods)
-    forecast = model.predict(future)
+        # Create Future Dataframe and Predict
+        future = model.make_future_dataframe(periods=periods)
+        forecast = model.predict(future)
 
-    # Display Forecast Graph
-    st.write("Forecast Graph")
-    fig_forecast = px.line(forecast, x='ds', y='yhat', title='Temperature Forecast', 
-                           labels={'yhat': 'Forecast Temperature', 'ds': 'Forecast Date'})
-    st.plotly_chart(fig_forecast, use_container_width=True)
+        # Display Forecast Graph
+        st.write("Forecast Graph")
+        fig_forecast = px.line(forecast, x='ds', y='yhat', title='Temperature Forecast', 
+                               labels={'yhat': 'Forecast Temperature', 'ds': 'Forecast Date'})
+        st.plotly_chart(fig_forecast, use_container_width=True)
 
-    # Show Forecast Data Table
-    st.write("Forecast Data Table")
-    st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(), 
-                 column_config={'ds': 'Forecast Date', 'yhat': 'Forecast Temperature', 'yhat_lower': 'Lower Bound', 'yhat_upper': 'Upper Bound'})
+        # Show Forecast Data Table
+        st.write("Forecast Data Table")
+        st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(), 
+                     column_config={'ds': 'Forecast Date', 'yhat': 'Forecast Temperature', 'yhat_lower': 'Lower Bound', 'yhat_upper': 'Upper Bound'})
 
-    # Trend and Seasonality Components
-    st.write("Trend and Seasonality Components")
-    fig_components = model.plot_components(forecast)
-    st.pyplot(fig_components)
+        # Trend and Seasonality Components
+        st.write("Trend and Seasonality Components")
+        fig_components = model.plot_components(forecast)
+        st.pyplot(fig_components)
     
     # New Humidity Forecast Section
     if show_humidity:
@@ -81,6 +83,9 @@ if uploaded_file:
             st.dataframe(humidity_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(),
                          column_config={'ds': 'Forecast Date', 'yhat': 'Forecasted Humidity',
                                         'yhat_lower': 'Lower-Bound', 'yhat_upper': 'Uper-Bound'})
+            st.write("Humidity Trend and Seasonality Components")
+            fig_humidity_components = humidity_model.plot_components(humidity_forecast)
+            st.pyplot(fig_humidity_components)
         else:
             st.write("Humidity data not found in the uploaded CSV.")
     
@@ -101,6 +106,9 @@ if uploaded_file:
             st.dataframe(wind_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(), 
                          column_config={'ds': 'Forecast Date', 'yhat': 'Forecasted Wind Speed', 
                                         'yhat_lower': 'Lower-Bound', 'yhat_upper': 'Uper-Bound'})
+            st.write("Wind Speed Trend and Seasonality Components")
+            fig_wind_components = wind_model.plot_components(wind_forecast)
+            st.pyplot(fig_wind_components)
         else:
             st.write("Wind Speed data not found in the uploaded CSV.")
 
@@ -121,5 +129,8 @@ if uploaded_file:
             st.dataframe(mp_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(), 
                          column_config={'ds': 'Forecast Date', 'yhat': 'Forecasted Mean Pressure', 
                                         'yhat_lower': 'Lower-Bound', 'yhat_upper': 'Uper-Bound'})
+            st.write("Mean Pressure Trend and Seasonality Components")
+            fig_mp_components = mp_model.plot_components(mp_forecast)
+            st.pyplot(fig_mp_components)
         else:
             st.write("Mean Pressure data not found in the uploaded CSV.")
